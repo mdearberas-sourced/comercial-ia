@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { buildSystemPrompt } from "./prompts";
 import { db } from "@/lib/db";
 import { getMarketContext } from "@/services/market";
-import { MessageRole } from "@/generated/prisma/client";
+import { MessageRole } from "@prisma/client";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
 
