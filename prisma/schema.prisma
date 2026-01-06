@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Productor agrario (cliente)
+model Producer {
+  id        String   @id @default(cuid())
+  phone     String   @unique // Número de WhatsApp
+  name      String?
+  company   String?  // Nombre de la empresa/campo
+  location  String?  // Ubicación (provincia, localidad)
+
+  // Información del productor
+  hectares  Int?     // Hectáreas totales
+  mainCrops String[] // Cultivos principales: ["soja", "maiz", "trigo"]
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  conversations Conversation[]
+  inventory     Inventory[]
+}
+
+// Inventario de granos del productor
+model Inventory {
+  id         String   @id @default(cuid())
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id])
+
+  crop       String   // "soja", "maiz", "trigo", etc.
+  quantity   Float    // Toneladas
+  quality    String?  // Grado/calidad
+  location   String?  // Ubicación del acopio
+  harvest    String?  // Campaña: "2024/25"
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([producerId])
+}
+
+// Conversación de WhatsApp
+model Conversation {
+  id         String   @id @default(cuid())
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id])
+
+  // Estado de la conversación
+  status     ConversationStatus @default(ACTIVE)
+  context    Json?    // Contexto acumulado de la conversación
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  messages   Message[]
+
+  @@index([producerId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  role           MessageRole  // USER o ASSISTANT
+  content        String
+
+  // Metadata de WhatsApp
+  waMessageId    String?      @unique // ID del mensaje en WhatsApp
+
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+// Datos de mercado (cache de CMA cuando esté disponible)
+model MarketData {
+  id        String   @id @default(cuid())
+
+  crop      String   // "soja", "maiz", "trigo"
+  market    String   // "rosario", "chicago", "matba"
+  type      String   // "spot", "futuro"
+  position  String?  // Para futuros: "may25", "jul25", etc.
+
+  price     Float    // Precio en USD/tn
+  currency  String   @default("USD")
+
+  date      DateTime
+  source    String   @default("CMA")
+
+  createdAt DateTime @default(now())
+
+  @@unique([crop, market, type, position, date])
+  @@index([crop, date])
+}
+
+enum ConversationStatus {
+  ACTIVE
+  CLOSED
+  WAITING_RESPONSE
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
