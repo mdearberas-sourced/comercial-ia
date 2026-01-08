@@ -31,20 +31,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
-
-    // Verificar firma del webhook (opcional pero recomendado)
-    const signature = request.headers.get("x-hub-signature-256");
-    if (signature && process.env.KAPSO_WEBHOOK_SECRET) {
-      const isValid = verifyWebhookSignature(
-        body,
-        signature,
-        process.env.KAPSO_WEBHOOK_SECRET
-      );
-      if (!isValid) {
-        console.error("Invalid webhook signature");
-        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-      }
-    }
+    console.log("Webhook received:", body);
 
     const webhook: WhatsAppWebhookMessage = JSON.parse(body);
 
@@ -52,7 +39,7 @@ export async function POST(request: NextRequest) {
     const message = extractMessage(webhook);
 
     if (!message) {
-      // Puede ser un status update (delivered, read) - ignorar
+      console.log("No message extracted - probably status update");
       return NextResponse.json({ status: "ok" });
     }
 
@@ -60,9 +47,12 @@ export async function POST(request: NextRequest) {
 
     // Procesar con el agente IA
     const response = await processMessage(message.from, message.text);
+    console.log("Agent response:", response.content.substring(0, 100));
 
     // Enviar respuesta por WhatsApp
-    await sendMessage(message.from, response.content);
+    console.log("Sending message to:", message.from);
+    const sendResult = await sendMessage(message.from, response.content);
+    console.log("Send result:", JSON.stringify(sendResult));
 
     console.log(`Response sent. Tokens used: ${response.tokensUsed}`);
 
