@@ -18,7 +18,7 @@ export async function sendMessage(to: string, text: string): Promise<KapsoSendRe
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "x-kapso-api-key": KAPSO_API_KEY,
+      "Authorization": `Bearer ${KAPSO_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -50,7 +50,7 @@ export async function sendInteractiveButtons(
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "x-kapso-api-key": KAPSO_API_KEY,
+      "Authorization": `Bearer ${KAPSO_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -85,7 +85,7 @@ export async function markAsRead(messageId: string): Promise<void> {
   await fetch(url, {
     method: "POST",
     headers: {
-      "x-kapso-api-key": KAPSO_API_KEY,
+      "Authorization": `Bearer ${KAPSO_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
