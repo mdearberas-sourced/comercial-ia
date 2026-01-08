@@ -1,5 +1,35 @@
 import { createHmac } from "crypto";
 
+// Formato de webhook de Kapso (diferente al de Meta)
+export interface KapsoWebhookPayload {
+  message: {
+    from: string;
+    id: string;
+    timestamp: string;
+    type: "text" | "interactive" | "image" | "audio";
+    text?: { body: string };
+    interactive?: {
+      type: string;
+      button_reply?: { id: string; title: string };
+      list_reply?: { id: string; title: string };
+    };
+    kapso?: {
+      direction: string;
+      status: string;
+      content: string;
+    };
+  };
+  conversation: {
+    id: string;
+    contact_name: string;
+    phone_number: string;
+    phone_number_id: string;
+  };
+  phone_number_id: string;
+  is_new_conversation: boolean;
+}
+
+// Formato estándar de Meta (por si también lo recibimos)
 export interface WhatsAppWebhookMessage {
   object: string;
   entry: Array<{
@@ -52,30 +82,58 @@ export function verifyWebhookSignature(
 }
 
 export function extractMessage(
-  webhook: WhatsAppWebhookMessage
+  webhook: KapsoWebhookPayload | WhatsAppWebhookMessage
 ): { from: string; text: string; messageId: string } | null {
-  const entry = webhook.entry?.[0];
-  const change = entry?.changes?.[0];
-  const message = change?.value?.messages?.[0];
 
-  if (!message) return null;
+  // Formato Kapso
+  if ("message" in webhook && webhook.message) {
+    const msg = webhook.message;
+    let text = "";
 
-  let text = "";
+    if (msg.type === "text" && msg.text) {
+      text = msg.text.body;
+    } else if (msg.kapso?.content) {
+      text = msg.kapso.content;
+    } else if (msg.type === "interactive" && msg.interactive) {
+      const reply = msg.interactive.button_reply || msg.interactive.list_reply;
+      text = reply?.title || reply?.id || "";
+    } else {
+      text = "[Mensaje no soportado - por favor enviá texto]";
+    }
 
-  if (message.type === "text" && message.text) {
-    text = message.text.body;
-  } else if (message.type === "interactive" && message.interactive) {
-    const reply =
-      message.interactive.button_reply || message.interactive.list_reply;
-    text = reply?.title || reply?.id || "";
-  } else {
-    // Audio, imagen, etc. - por ahora no soportados
-    text = "[Mensaje no soportado - por favor enviá texto]";
+    return {
+      from: msg.from,
+      text,
+      messageId: msg.id,
+    };
   }
 
-  return {
-    from: message.from,
-    text,
-    messageId: message.id,
-  };
+  // Formato Meta estándar
+  if ("entry" in webhook) {
+    const entry = webhook.entry?.[0];
+    const change = entry?.changes?.[0];
+    const message = change?.value?.messages?.[0];
+
+    if (!message) return null;
+
+    let text = "";
+
+    if (message.type === "text" && message.text) {
+      text = message.text.body;
+    } else if (message.type === "interactive" && message.interactive) {
+      const reply =
+        message.interactive.button_reply || message.interactive.list_reply;
+      text = reply?.title || reply?.id || "";
+    } else {
+      text = "[Mensaje no soportado - por favor enviá texto]";
+    }
+
+    return {
+      from: message.from,
+      text,
+      messageId: message.id,
+    };
+  }
+
+  return null;
 }

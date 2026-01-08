@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  verifyWebhookSignature,
   extractMessage,
+  KapsoWebhookPayload,
   WhatsAppWebhookMessage,
 } from "@/lib/kapso/webhook";
 import { processMessage } from "@/lib/ai/agent";
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const body = await request.text();
     console.log("Webhook received:", body);
 
-    const webhook: WhatsAppWebhookMessage = JSON.parse(body);
+    const webhook: KapsoWebhookPayload | WhatsAppWebhookMessage = JSON.parse(body);
 
     // Extraer mensaje
     const message = extractMessage(webhook);
