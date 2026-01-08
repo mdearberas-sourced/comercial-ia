@@ -15,10 +15,13 @@ export async function GET(request: NextRequest) {
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  // Verificar que el token coincida con el configurado
-  if (mode === "subscribe" && token === process.env.KAPSO_WEBHOOK_SECRET) {
-    console.log("Webhook verified successfully");
-    return new NextResponse(challenge, { status: 200 });
+  // Verificar webhook - si hay secret configurado, validar; sino aceptar
+  const secret = process.env.KAPSO_WEBHOOK_SECRET;
+  if (mode === "subscribe") {
+    if (!secret || token === secret) {
+      console.log("Webhook verified successfully");
+      return new NextResponse(challenge, { status: 200 });
+    }
   }
 
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
