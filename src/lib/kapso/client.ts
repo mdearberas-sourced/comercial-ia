@@ -12,7 +12,7 @@ interface KapsoErrorResponse {
 }
 
 export async function sendMessage(to: string, text: string): Promise<KapsoSendResponse> {
-  const url = `https://api.kapso.ai/v1/whatsapp/${PHONE_NUMBER_ID}/messages`;
+  const url = `https://api.kapso.ai/meta/whatsapp/${PHONE_NUMBER_ID}/messages`;
 
   const response = await fetch(url, {
     method: "POST",
@@ -43,7 +43,7 @@ export async function sendInteractiveButtons(
   body: string,
   buttons: Array<{ id: string; title: string }>
 ): Promise<KapsoSendResponse> {
-  const url = `https://api.kapso.ai/v1/whatsapp/${PHONE_NUMBER_ID}/messages`;
+  const url = `https://api.kapso.ai/meta/whatsapp/${PHONE_NUMBER_ID}/messages`;
 
   const response = await fetch(url, {
     method: "POST",
@@ -79,7 +79,7 @@ export async function sendInteractiveButtons(
 }
 
 export async function markAsRead(messageId: string): Promise<void> {
-  const url = `https://api.kapso.ai/v1/whatsapp/${PHONE_NUMBER_ID}/messages`;
+  const url = `https://api.kapso.ai/meta/whatsapp/${PHONE_NUMBER_ID}/messages`;
 
   await fetch(url, {
     method: "POST",
