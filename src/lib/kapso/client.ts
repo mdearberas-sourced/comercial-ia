@@ -8,7 +8,8 @@ interface KapsoSendResponse {
 }
 
 export async function sendMessage(to: string, text: string): Promise<KapsoSendResponse> {
-  const url = `https://api.kapso.ai/meta/whatsapp/${PHONE_NUMBER_ID}/messages`;
+  // Kapso proxy to Meta Graph API
+  const url = `https://api.kapso.ai/meta/whatsapp/v21.0/${PHONE_NUMBER_ID}/messages`;
 
   console.log("Kapso URL:", url);
   console.log("Phone Number ID:", PHONE_NUMBER_ID);
