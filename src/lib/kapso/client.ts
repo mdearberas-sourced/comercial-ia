@@ -7,17 +7,17 @@ interface KapsoSendResponse {
   messages: Array<{ id: string }>;
 }
 
-interface KapsoErrorResponse {
-  error: string;
-}
-
 export async function sendMessage(to: string, text: string): Promise<KapsoSendResponse> {
   const url = `https://api.kapso.ai/meta/whatsapp/${PHONE_NUMBER_ID}/messages`;
+
+  console.log("Kapso URL:", url);
+  console.log("Phone Number ID:", PHONE_NUMBER_ID);
+  console.log("API Key (first 10 chars):", KAPSO_API_KEY.substring(0, 10));
 
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${KAPSO_API_KEY}`,
+      "x-kapso-api-key": KAPSO_API_KEY,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -28,14 +28,15 @@ export async function sendMessage(to: string, text: string): Promise<KapsoSendRe
     }),
   });
 
-  const data = await response.json();
+  const responseText = await response.text();
+  console.log("Kapso response status:", response.status);
+  console.log("Kapso response:", responseText.substring(0, 500));
 
   if (!response.ok) {
-    console.error("Kapso API error:", data);
-    throw new Error((data as KapsoErrorResponse).error || `Kapso error: ${response.status}`);
+    throw new Error(`Kapso error: ${response.status} - ${responseText.substring(0, 200)}`);
   }
 
-  return data as KapsoSendResponse;
+  return JSON.parse(responseText) as KapsoSendResponse;
 }
 
 export async function sendInteractiveButtons(
@@ -48,7 +49,7 @@ export async function sendInteractiveButtons(
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${KAPSO_API_KEY}`,
+      "x-kapso-api-key": KAPSO_API_KEY,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -68,14 +69,13 @@ export async function sendInteractiveButtons(
     }),
   });
 
-  const data = await response.json();
+  const responseText = await response.text();
 
   if (!response.ok) {
-    console.error("Kapso API error:", data);
-    throw new Error((data as KapsoErrorResponse).error || `Kapso error: ${response.status}`);
+    throw new Error(`Kapso error: ${response.status} - ${responseText.substring(0, 200)}`);
   }
 
-  return data as KapsoSendResponse;
+  return JSON.parse(responseText) as KapsoSendResponse;
 }
 
 export async function markAsRead(messageId: string): Promise<void> {
@@ -84,7 +84,7 @@ export async function markAsRead(messageId: string): Promise<void> {
   await fetch(url, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${KAPSO_API_KEY}`,
+      "x-kapso-api-key": KAPSO_API_KEY,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
